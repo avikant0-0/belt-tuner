@@ -2,8 +2,8 @@
 import '../styles/global.css';
 
 const { 
-  title = "Belt Tuner | 3D Printer Belt Tension Frequency Calculator", 
-  description = "A free tool to measure your 3D printer belt tension using microphone pitch detection. Find the perfect belt tension Hz for Ender 3, Bambu, Prusa, and more.",
+  title = "Belt Tuner | 3D Print Belt Tension Frequency Calculator", 
+  description = "A free tool to measure 3d print belt tension using microphone pitch detection. Find the perfect belt tension hz for Ender 3, Bambu, Prusa, and more.",
   image = "https://belttuner.com/og-image.png",
   canonicalURL = "https://belttuner.com/"
 } = Astro.props;
@@ -39,6 +39,16 @@ const {
   </head>
   <body>
     <main class="tool-container">
+      <header class="header">
+        <a href="/" class="header__logo">Belt Tuner</a>
+        <nav class="header__nav">
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+      </header>
+      
       <slot />
       
       <footer class="footer">
@@ -68,6 +78,37 @@ const {
 </html>
 
 <style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header__logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .header__nav {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .header__nav a {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .header__nav a:hover {
+    color: var(--text-primary);
+  }
+
   .footer {
     margin-top: auto; /* push to bottom of tool-container */
     padding-top: var(--space-8);
