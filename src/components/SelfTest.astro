@@ -1,0 +1,40 @@
+---
+---
+<div class="self-test card">
+  <h3>Self-Test Tone Generator</h3>
+  <p>Use this to verify the pitch detection algorithm works correctly without a printer.</p>
+  <div class="slider-container">
+    <label for="testFreqSlider">Frequency: <span id="testFreqLabel">80 Hz</span></label>
+    <input type="range" id="testFreqSlider" min="40" max="120" value="80" step="1" />
+  </div>
+  <button type="button" class="btn-mic btn-mic--start" id="testBtn">Start Test Tone</button>
+</div>
+
+<style>
+  .self-test {
+    margin-top: var(--space-6);
+    padding: var(--space-4);
+  }
+  h3 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: var(--space-2);
+  }
+  p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-4);
+  }
+  .slider-container {
+    margin-bottom: var(--space-4);
+  }
+  label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+  input[type="range"] {
+    width: 100%;
+  }
+</style>

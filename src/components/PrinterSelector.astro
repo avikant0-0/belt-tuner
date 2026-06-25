@@ -1,0 +1,94 @@
+---
+import { targets } from '../data/targets.js';
+
+// Sort alphabetically
+const sortedTargets = [...targets].sort((a, b) => a.name.localeCompare(b.name));
+---
+<div class="printer-selector">
+  <label for="printerSelect" class="sr-only">Select Printer Model</label>
+  <select id="printerSelect" class="printer-select">
+    <option value="">-- Custom / No Target --</option>
+    {sortedTargets.map(t => (
+      <option value={t.id} data-lo={t.lo} data-hi={t.hi} data-conf={t.confidence} data-source={t.source} data-notes={t.notes}>
+        {t.name}
+      </option>
+    ))}
+  </select>
+  <div class="printer-meta">
+    <div id="printerBadge" class="badge badge--none" style="display: none;"></div>
+    <div id="targetHz" class="target-hz" style="display: none;"></div>
+  </div>
+  <p id="printerNotes" class="printer-notes" style="display: none;"></p>
+</div>
+
+<style>
+  .printer-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+  .printer-select {
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+  }
+  .printer-meta {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    width: 100%;
+  }
+  .target-hz {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge--official {
+    background: hsl(142, 71%, 10%);
+    color: var(--color-success);
+    border: 1px solid hsl(142, 71%, 20%);
+  }
+  .badge--community {
+    background: hsl(38, 92%, 10%);
+    color: var(--color-warning);
+    border: 1px solid hsl(38, 92%, 20%);
+  }
+  .badge--none {
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .printer-notes {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-top: var(--space-2);
+  }
+  .printer-notes a {
+    color: var(--color-accent);
+  }
+</style>

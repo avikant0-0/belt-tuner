@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Submit a Target | Belt Tuner">
+  <div class="submit-page">
+    <h1>Submit a Missing Printer</h1>
+    <p class="description">
+      Did you find a reliable official or community belt tension target for a printer not listed here? Submit it below and we'll add it to the database!
+    </p>
+
+    <!-- Web3Forms Form -->
+    <form action="https://api.web3forms.com/submit" method="POST" class="submission-form">
+      <!-- Replace with your actual Web3Forms access key -->
+      <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
+      
+      <div class="form-group">
+        <label for="printerName">Printer Model</label>
+        <input type="text" id="printerName" name="printerName" required placeholder="e.g. Creality Ender 3 V3 KE">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="hzLo">Target Hz (Low)</label>
+          <input type="number" id="hzLo" name="hzLo" required placeholder="e.g. 100">
+        </div>
+        <div class="form-group">
+          <label for="hzHi">Target Hz (High)</label>
+          <input type="number" id="hzHi" name="hzHi" required placeholder="e.g. 115">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="sourceUrl">Source URL (Critical)</label>
+        <input type="url" id="sourceUrl" name="sourceUrl" required placeholder="Link to manufacturer docs, reddit thread, or forum post">
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Additional Notes</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Any specific instructions? (e.g. Move toolhead to center)"></textarea>
+      </div>
+
+      <!-- Optional: Bot spam protection -->
+      <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+
+      <button type="submit" class="btn-submit">Submit Target</button>
+    </form>
+    <a href="/" class="back-link">← Back to Tuner</a>
+  </div>
+
+  <style>
+    .submit-page {
+      padding: var(--space-4) 0;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-2);
+    }
+    .description {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-6);
+      line-height: 1.5;
+    }
+    .submission-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      background: var(--bg-elevated);
+      padding: var(--space-6);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    .form-row {
+      display: flex;
+      gap: var(--space-4);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      flex: 1;
+    }
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    input, textarea {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    input:focus, textarea:focus {
+      outline: 2px solid var(--color-accent);
+      border-color: transparent;
+    }
+    .btn-submit {
+      background: var(--color-accent);
+      color: white;
+      border: none;
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: var(--space-2);
+    }
+    .btn-submit:hover {
+      opacity: 0.9;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: var(--space-6);
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: var(--text-primary);
+    }
+  </style>
+</BaseLayout>

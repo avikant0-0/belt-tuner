@@ -1,0 +1,41 @@
+---
+---
+<button type="button" class="btn-mic btn-mic--start" id="micBtn">
+  <span id="micBtnText">Start Mic</span>
+</button>
+
+<style>
+  .btn-mic {
+    width: 100%;
+    min-height: 64px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    transition: transform 0.1s, background 0.2s;
+  }
+
+  .btn-mic--start {
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .btn-mic--stop {
+    background: var(--color-danger);
+    color: white;
+  }
+
+  .btn-mic:active {
+    transform: scale(0.97);
+  }
+
+  .btn-mic:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+</style>

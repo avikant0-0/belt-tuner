@@ -1,0 +1,28 @@
+---
+---
+<div class="frequency-readout frequency-readout--silent" id="freqReadout" aria-live="polite">
+  <span id="freqValue">--</span><span class="frequency-readout__label">Hz</span>
+</div>
+
+<style>
+  .frequency-readout {
+    font-family: var(--font-mono);
+    font-size: clamp(3rem, 15vw, 6rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    text-align: center;
+    line-height: 1;
+    margin: var(--space-6) 0;
+  }
+
+  .frequency-readout--silent {
+    color: var(--text-muted);
+  }
+
+  .frequency-readout__label {
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
+    margin-left: var(--space-2);
+    font-weight: 500;
+  }
+</style>

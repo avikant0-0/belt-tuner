@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Terms of Use | Belt Tuner">
+  <h1>Terms of Use</h1>
+  
+  <h2>1. General Use</h2>
+  <p>Belt Tuner is provided "as is", without warranty of any kind. Your use of the tool is at your own risk.</p>
+
+  <h2>2. Hardware Safety</h2>
+  <p><strong>Over-tensioning belts can severely damage your 3D printer's stepper motors, bearings, and frame.</strong> Always verify target frequencies with your printer manufacturer's official documentation before applying tension. We do not accept any liability for hardware damage resulting from the use of this tool.</p>
+
+  <h2>3. Accuracy</h2>
+  <p>While Belt Tuner uses mathematical algorithms to estimate audio frequency, background noise and hardware differences can affect accuracy. Always use your best judgment.</p>
+
+  <style>
+    h1, h2 {
+      color: var(--text-primary);
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-2);
+    }
+    p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+    strong {
+      color: var(--color-warning);
+    }
+  </style>
+</BaseLayout>

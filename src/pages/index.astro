@@ -1,0 +1,462 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FrequencyReadout from '../components/FrequencyReadout.astro';
+import VerdictLine from '../components/VerdictLine.astro';
+import ConfidenceBar from '../components/ConfidenceBar.astro';
+import PrinterSelector from '../components/PrinterSelector.astro';
+import MicButton from '../components/MicButton.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import AffiliateLinks from '../components/AffiliateLinks.astro';
+import SelfTest from '../components/SelfTest.astro';
+---
+<BaseLayout title="Belt Tuner | 3D Printer Belt Tension Frequency">
+  <div id="errorContainer" class="error-msg" style="display: none;"></div>
+
+  <FrequencyReadout />
+  <canvas id="oscilloscope" class="oscilloscope" width="800" height="150"></canvas>
+  <VerdictLine />
+  <ConfidenceBar />
+  <PrinterSelector />
+  <div class="submit-container">
+    <a href="/submit" class="link-submit">Missing your printer? Submit a target here</a>
+  </div>
+  <MicButton />
+  <Disclaimer />
+  <SelfTest />
+  <AffiliateLinks />
+
+  <style>
+    .oscilloscope {
+      width: 100%;
+      height: 120px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+      display: block;
+    }
+    .submit-container {
+      margin-top: var(--space-2);
+      margin-bottom: var(--space-6);
+      text-align: right;
+    }
+    .link-submit {
+      font-size: 0.875rem;
+      color: var(--color-accent);
+      text-decoration: underline;
+    }
+    .error-msg {
+      background: var(--color-danger);
+      color: white;
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-6);
+      font-weight: 500;
+    }
+  </style>
+
+  <script>
+    // Audio Engine & App Logic
+    
+    // UI Elements
+    const micBtn = document.getElementById('micBtn');
+    const micBtnText = document.getElementById('micBtnText');
+    const freqValue = document.getElementById('freqValue');
+    const freqReadout = document.getElementById('freqReadout');
+    const confFill = document.getElementById('confFill');
+    const confValue = document.getElementById('confValue');
+    const verdictLine = document.getElementById('verdictLine');
+    const printerSelect = document.getElementById('printerSelect');
+    const printerBadge = document.getElementById('printerBadge');
+    const targetHz = document.getElementById('targetHz');
+    const printerNotes = document.getElementById('printerNotes');
+    const errorContainer = document.getElementById('errorContainer');
+    const testBtn = document.getElementById('testBtn');
+    const testFreqSlider = document.getElementById('testFreqSlider');
+    const testFreqLabel = document.getElementById('testFreqLabel');
+    const canvas = document.getElementById('oscilloscope');
+    const canvasCtx = canvas.getContext('2d');
+
+    // Audio State
+    let audioCtx = null;
+    let analyser = null;
+    let stream = null;
+    let source = null;
+    let isListening = false;
+    let testOsc = null;
+    let isTesting = false;
+    let animationFrameId = null;
+    let lastDetect = 0;
+    const bufSize = 4096;
+    let buf = new Float32Array(bufSize);
+    
+    // Smoothing buffer
+    const readings = [];
+    const BUFFER_SIZE = 6;
+
+    // Current Target State
+    let currentTarget = { lo: null, hi: null, confidence: "none" };
+
+    // Initialize from URL param OR localStorage
+    const params = new URLSearchParams(window.location.search);
+    const printerParam = params.get('printer');
+    const savedPrinter = localStorage.getItem('selectedPrinter');
+    
+    if (printerParam && Array.from(printerSelect.options).some(o => o.value === printerParam)) {
+      printerSelect.value = printerParam;
+    } else if (savedPrinter && Array.from(printerSelect.options).some(o => o.value === savedPrinter)) {
+      printerSelect.value = savedPrinter;
+    }
+    updateTargetUI();
+
+    function updateTargetUI() {
+      const selected = printerSelect.options[printerSelect.selectedIndex];
+      if (!selected.value) {
+        currentTarget = { lo: null, hi: null, confidence: "none" };
+        printerBadge.style.display = 'none';
+        targetHz.style.display = 'none';
+        printerNotes.style.display = 'none';
+      } else {
+        const lo = parseFloat(selected.getAttribute('data-lo'));
+        const hi = parseFloat(selected.getAttribute('data-hi'));
+        currentTarget = {
+          lo: isNaN(lo) ? null : lo,
+          hi: isNaN(hi) ? null : hi,
+          confidence: selected.getAttribute('data-conf')
+        };
+        
+        printerBadge.style.display = 'inline-flex';
+        printerBadge.className = `badge badge--${currentTarget.confidence}`;
+        printerBadge.textContent = currentTarget.confidence === 'official' ? '✅ Official' : currentTarget.confidence === 'community' ? '⚠️ Community' : '⛔ No target';
+        
+        if (currentTarget.lo !== null && currentTarget.hi !== null) {
+          targetHz.style.display = 'block';
+          targetHz.textContent = `Target: ${currentTarget.lo} – ${currentTarget.hi} Hz`;
+        } else {
+          targetHz.style.display = 'none';
+        }
+        
+        const notes = selected.getAttribute('data-notes');
+        if (notes) {
+          printerNotes.style.display = 'block';
+          printerNotes.innerHTML = notes;
+        } else {
+          printerNotes.style.display = 'none';
+        }
+      }
+      updateVerdict(null);
+    }
+
+    printerSelect.addEventListener('change', () => {
+      updateTargetUI();
+      // Update URL without reload
+      const url = new URL(window.location);
+      if (printerSelect.value) {
+        url.searchParams.set('printer', printerSelect.value);
+        localStorage.setItem('selectedPrinter', printerSelect.value);
+      } else {
+        url.searchParams.delete('printer');
+        localStorage.removeItem('selectedPrinter');
+      }
+      window.history.replaceState({}, '', url);
+    });
+
+    function showError(msg) {
+      errorContainer.textContent = msg;
+      errorContainer.style.display = 'block';
+    }
+    function hideError() {
+      errorContainer.style.display = 'none';
+    }
+
+    function checkEnvironment() {
+      if (!window.AudioContext && !window.webkitAudioContext) {
+        return { ok: false, msg: 'Your browser does not support Web Audio API. Try Chrome or Safari.' };
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        return { ok: false, msg: 'Microphone access not available. Try Chrome or Safari.' };
+      }
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        return { ok: false, msg: 'Microphone access requires HTTPS.' };
+      }
+      return { ok: true };
+    }
+
+    async function initAudioContext() {
+      if (!audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioCtx();
+      }
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      if (!analyser) {
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = bufSize;
+      }
+    }
+
+    async function startAudio() {
+      hideError();
+      const env = checkEnvironment();
+      if (!env.ok) {
+        showError(env.msg);
+        return;
+      }
+      
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false }, video: false });
+      } catch (err) {
+        showError('Microphone permission denied or not available.');
+        return;
+      }
+
+      await initAudioContext();
+      
+      source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      isListening = true;
+      micBtn.classList.remove('btn-mic--start');
+      micBtn.classList.add('btn-mic--stop');
+      micBtnText.textContent = 'Stop Mic';
+      
+      readings.length = 0; // clear buffer
+      loop();
+    }
+
+    function stopAudio() {
+      isListening = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      if (source) {
+        source.disconnect();
+        source = null;
+      }
+      micBtn.classList.remove('btn-mic--stop');
+      micBtn.classList.add('btn-mic--start');
+      micBtnText.textContent = 'Start Mic';
+      resetReadout();
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (isTesting) stopTest();
+      if (isListening) stopAudio();
+      else startAudio();
+    });
+
+    // Self Test
+    testFreqSlider.addEventListener('input', () => {
+      testFreqLabel.textContent = `${testFreqSlider.value} Hz`;
+      if (testOsc) {
+        testOsc.frequency.value = testFreqSlider.value;
+      }
+    });
+
+    async function startTest() {
+      if (isListening) stopAudio();
+      hideError();
+      
+      await initAudioContext();
+      
+      testOsc = audioCtx.createOscillator();
+      testOsc.type = 'sawtooth'; // Sine waves below 100Hz are inaudible on most laptop/phone speakers
+      const dest = audioCtx.createMediaStreamDestination();
+      testOsc.frequency.value = testFreqSlider.value;
+      testOsc.connect(dest);
+      
+      // Route test tone to the analyser
+      source = audioCtx.createMediaStreamSource(dest.stream);
+      source.connect(analyser);
+      
+      // Also route test tone to speakers so the user hears it
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = 0.5; // Half volume to avoid blasting speakers
+      testOsc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      testOsc.start();
+      
+      isTesting = true;
+      testBtn.classList.remove('btn-mic--start');
+      testBtn.classList.add('btn-mic--stop');
+      testBtn.textContent = 'Stop Test Tone';
+      
+      readings.length = 0;
+      loop();
+    }
+
+    function stopTest() {
+      isTesting = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (testOsc) {
+        testOsc.stop();
+        testOsc.disconnect();
+        testOsc = null;
+      }
+      if (source) {
+        source.disconnect();
+        source = null;
+      }
+      testBtn.classList.remove('btn-mic--stop');
+      testBtn.classList.add('btn-mic--start');
+      testBtn.textContent = 'Start Test Tone';
+      resetReadout();
+    }
+
+    testBtn.addEventListener('click', () => {
+      if (isTesting) stopTest();
+      else startTest();
+    });
+
+    function resetReadout() {
+      freqValue.textContent = '--';
+      freqReadout.classList.add('frequency-readout--silent');
+      updateVerdict(null);
+      updateConfidence(0);
+    }
+
+    function updateConfidence(conf) {
+      const pct = Math.min(100, Math.max(0, Math.round(conf * 100)));
+      confValue.textContent = `${pct}%`;
+      confFill.style.width = `${pct}%`;
+    }
+
+    function updateVerdict(freq) {
+      verdictLine.className = 'verdict';
+      if (!freq) {
+        verdictLine.classList.add('verdict--no-target');
+        verdictLine.textContent = currentTarget.confidence !== 'none' ? 'Pluck the belt...' : 'No target available';
+        return;
+      }
+      
+      if (currentTarget.confidence === 'none' || currentTarget.lo === null || currentTarget.hi === null) {
+        verdictLine.classList.add('verdict--no-target');
+        verdictLine.textContent = 'Frequency measured';
+        return;
+      }
+
+      const diffLo = freq - currentTarget.lo;
+      const diffHi = freq - currentTarget.hi;
+      
+      if (freq >= currentTarget.lo && freq <= currentTarget.hi) {
+        verdictLine.classList.add('verdict--in-range');
+        verdictLine.textContent = '✓ Perfect tension';
+      } else if (freq < currentTarget.lo) {
+        verdictLine.classList.add('verdict--too-loose');
+        verdictLine.textContent = `↑ Too loose (need ${currentTarget.lo}Hz min)`;
+      } else {
+        verdictLine.classList.add('verdict--too-tight');
+        verdictLine.textContent = `↓ Too tight (need ${currentTarget.hi}Hz max)`;
+      }
+    }
+
+    function median(arr) {
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function computeRMS(buf) {
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      return Math.sqrt(sum / buf.length);
+    }
+
+    function getPeakVal(buf, lag, c0, n) {
+      let c = 0;
+      for (let i = 0; i < n - lag; i++) c += buf[i] * buf[i + lag];
+      return c / c0;
+    }
+
+    function detectPitch(buf, sr) {
+      const n = buf.length;
+      const minLag = Math.floor(sr / 350);
+      const maxLag = Math.floor(sr / 35);
+
+      let c0 = 0;
+      for (let i = 0; i < n; i++) c0 += buf[i] * buf[i];
+      if (c0 === 0) return null;
+
+      let bestLag = -1, bestVal = -Infinity;
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        let c = 0;
+        for (let i = 0; i < n - lag; i++) c += buf[i] * buf[i + lag];
+        const norm = c / c0;
+        if (norm > bestVal) { bestVal = norm; bestLag = lag; }
+      }
+
+      if (bestLag > minLag && bestLag < maxLag) {
+        const y1 = getPeakVal(buf, bestLag - 1, c0, n);
+        const y2 = bestVal;
+        const y3 = getPeakVal(buf, bestLag + 1, c0, n);
+        const delta = (y3 - y1) / (2 * (2 * y2 - y1 - y3));
+        bestLag += delta;
+      }
+
+      const freq = sr / bestLag;
+      if (freq < 35 || freq > 350) return null;
+      return { freq, confidence: bestVal };
+    }
+
+    function loop() {
+      animationFrameId = requestAnimationFrame(loop);
+      
+      analyser.getFloatTimeDomainData(buf);
+      
+      // Draw Oscilloscope
+      canvasCtx.fillStyle = '#111827'; // Dark background
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = '#22c55e'; // Green accent
+      canvasCtx.beginPath();
+      
+      const sliceWidth = canvas.width * 1.0 / buf.length;
+      let x = 0;
+      
+      for(let i = 0; i < buf.length; i++) {
+        const v = buf[i] * 5.0; // scale up amplitude
+        const y = (v * canvas.height / 2) + canvas.height / 2;
+        
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
+        x += sliceWidth;
+      }
+      canvasCtx.lineTo(canvas.width, canvas.height / 2);
+      canvasCtx.stroke();
+
+      const now = performance.now();
+      if (now - lastDetect < 60) return;
+      lastDetect = now;
+      
+      const rms = computeRMS(buf);
+      if (rms < 0.005) {
+        updateConfidence(0);
+        return; // Silent
+      }
+
+      const pitch = detectPitch(buf, audioCtx.sampleRate);
+      if (!pitch) return;
+      
+      updateConfidence(pitch.confidence);
+
+      if (pitch.confidence > 0.45) {
+        readings.push(pitch.freq);
+        if (readings.length > BUFFER_SIZE) readings.shift();
+        
+        if (readings.length >= 3) { // start showing after 3 valid readings
+          const medFreq = median(readings);
+          freqValue.textContent = medFreq.toFixed(1);
+          freqReadout.classList.remove('frequency-readout--silent');
+          updateVerdict(medFreq);
+        }
+      }
+    }
+  </script>
+</BaseLayout>

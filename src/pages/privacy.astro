@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Privacy Policy | Belt Tuner">
+  <h1>Privacy Policy</h1>
+  
+  <h2>1. Audio Processing</h2>
+  <p>Belt Tuner is designed with privacy as the highest priority. All audio processing for pitch detection happens <strong>100% locally within your web browser</strong>. We do not record, store, or transmit your microphone audio to any server. No audio data ever leaves your device.</p>
+
+  <h2>2. Cookies and Local Storage</h2>
+  <p>Belt Tuner may use local storage to remember your previously selected 3D printer model for convenience. This data remains on your device.</p>
+
+  <h2>3. Third-Party Services</h2>
+  <p>We use third-party services like Google AdSense to display advertisements, which may use cookies to serve ads based on your prior visits to this or other websites. You can opt out of personalized advertising by visiting Google's Ads Settings.</p>
+
+  <h2>4. Affiliate Links</h2>
+  <p>Some links to replacement belts and tools are affiliate links, meaning we may earn a small commission if you make a purchase, at no additional cost to you.</p>
+
+  <style>
+    h1, h2 {
+      color: var(--text-primary);
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-2);
+    }
+    p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+  </style>
+</BaseLayout>

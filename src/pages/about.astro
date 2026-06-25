@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="About & Physics | Belt Tuner">
+  <h1>About Belt Tuner</h1>
+  <p>Belt Tuner is a free tool designed to help 3D printer enthusiasts accurately tension their timing belts. We use your device's microphone and the Web Audio API to detect the pitch (frequency in Hz) of the sound produced when you pluck the belt like a guitar string.</p>
+
+  <h2>The Physics of Belt Tension</h2>
+  <p>The frequency of a vibrating string or belt is directly related to its tension, length, and linear density (mass per unit length). The relationship is governed by the wave equation:</p>
+  <div class="equation">
+    f = (1 / 2L) * &radic;(T / &mu;)
+  </div>
+  <p>Where:</p>
+  <ul>
+    <li><strong>f</strong> is the fundamental frequency (Hz)</li>
+    <li><strong>L</strong> is the vibrating length of the belt</li>
+    <li><strong>T</strong> is the tension</li>
+    <li><strong>&mu;</strong> is the linear mass density of the belt (e.g., standard GT2 6mm belt)</li>
+  </ul>
+  <p>For a specific 3D printer model, the belt length <em>L</em> and belt type <em>&mu;</em> are constant. This means the tension <em>T</em> is solely determined by the frequency <em>f</em>. Manufacturers or the community can therefore specify an ideal target frequency for a specific axis of a specific printer model to guarantee proper tension.</p>
+
+  <h2>How It Works</h2>
+  <p>When you press "Start Mic" and pluck a belt, the app captures the audio buffer. It then applies an autocorrelation algorithm to find the fundamental frequency of the pluck, filtering out background noise and overtones. This gives a highly accurate reading of the belt's pitch without requiring an expensive physical tension gauge.</p>
+
+  <style>
+    h1, h2 {
+      color: var(--text-primary);
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-2);
+    }
+    p, ul {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+    ul {
+      padding-left: var(--space-6);
+    }
+    li {
+      margin-bottom: var(--space-1);
+    }
+    .equation {
+      font-family: var(--font-mono);
+      background: var(--bg-elevated);
+      padding: var(--space-4);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 1.125rem;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+  </style>
+</BaseLayout>
