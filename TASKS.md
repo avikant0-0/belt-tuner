@@ -132,7 +132,7 @@
 | `src/components/SelfTest.astro` | ✅ done |
 | `src/components/Disclaimer.astro` | ✅ done |
 | `src/components/AffiliateLinks.astro` | ✅ done |
-| `public/og-image.png` | ⏳ pending |
+| `public/og-image.png` | ✅ done |
 | `README.md` | ✅ done |
 | `PLAN.md` | ✅ done |
 | `TASKS.md` | ✅ done |
