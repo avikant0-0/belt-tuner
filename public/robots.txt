@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://your-actual-domain.com/sitemap-index.xml
+Sitemap: https://belttuner.xyz/sitemap-index.xml

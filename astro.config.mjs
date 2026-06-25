@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://your-actual-domain.com',
+  site: 'https://belttuner.xyz',
   output: 'static',
   integrations: [sitemap()],
 });
