@@ -145,18 +145,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </style>
 
   <script>
-    const form = document.getElementById('printerForm');
-    const result = document.getElementById('formResult');
+    const form = document.getElementById('printerForm') as HTMLFormElement;
+    const result = document.getElementById('formResult') as HTMLParagraphElement;
 
     if (form && result) {
       form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = new FormData(form);
-        const submitButton = form.querySelector('button[type="submit"]');
+        const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
         
-        submitButton.textContent = 'Submitting...';
-        submitButton.disabled = true;
+        if (submitButton) {
+          submitButton.textContent = 'Submitting...';
+          submitButton.disabled = true;
+        }
+        
         result.style.display = 'block';
         result.textContent = 'Please wait...';
         result.className = 'form-result loading';
@@ -180,8 +183,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           result.textContent = 'Network error. Please try again later.';
           result.className = 'form-result error';
         } finally {
-          submitButton.textContent = 'Submit Target';
-          submitButton.disabled = false;
+          if (submitButton) {
+            submitButton.textContent = 'Submit Target';
+            submitButton.disabled = false;
+          }
         }
       });
     }
